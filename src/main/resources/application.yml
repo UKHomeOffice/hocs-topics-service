@@ -1,0 +1,26 @@
+server:
+  http2:
+    enabled: true
+  max_http_request_header_size: 1048576
+  port: 8087
+  shutdown: graceful
+
+spring:
+  main:
+    banner-mode: off
+  flyway:
+    schemas: topics
+    locations: classpath:/db/schema,classpath:/db/data
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    url: jdbc:postgresql://${db.host:localhost}:${db.port:5432}/${db.name:postgres}?currentSchema=${db.schema.name:topics}&user=${db.username:root}&password=${db.password:dev}&stringtype=unspecified
+
+management:
+  endpoints:
+    enabled-by-default: false
+  endpoint:
+    health:
+      enabled: true
+      probes:
+        enabled: true
