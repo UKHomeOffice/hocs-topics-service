@@ -1,0 +1,46 @@
+package uk.gov.digital.ho.hocs.topics.controller.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import uk.gov.digital.ho.hocs.topics.domain.model.StageTypeEntity;
+
+@AllArgsConstructor
+@Getter
+public class StageTypeDto {
+
+    //TODO: remove - used in UI
+    @JsonProperty("label")
+    private String label;
+
+    //TODO: remove - used in UI
+    @JsonProperty("value")
+    private String value;
+
+    @JsonProperty("displayName")
+    private String displayName;
+
+    @JsonProperty("shortCode")
+    private String shortCode;
+
+    @JsonProperty("type")
+    private String type;
+
+    @JsonProperty("sla")
+    private int sla;
+
+    @JsonProperty("deadlineWarning")
+    private int deadlineWarning;
+
+    @JsonProperty("sortOrder")
+    private int sortOrder;
+
+    public static StageTypeDto from(StageTypeEntity stageTypeEntity) {
+
+        return new StageTypeDto(stageTypeEntity.getDisplayName(), stageTypeEntity.getType(),
+            stageTypeEntity.getDisplayName(), stageTypeEntity.getShortCode(), stageTypeEntity.getType(),
+            stageTypeEntity.getDeadline(), stageTypeEntity.getDeadlineWarning(),
+            stageTypeEntity.getDisplayStageOrder());
+    }
+
+}

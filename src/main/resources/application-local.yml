@@ -1,0 +1,23 @@
+localstack:
+  base-url: http://${localstack.config.host}:${localstack.config.port}
+  config:
+    host: localhost
+    port: 4566
+    region: eu-west-2
+
+aws:
+  sns:
+    config:
+      region: eu-west-2
+    audit-search:
+      account:
+        access-key: 12345
+        secret-key: 12345
+        id: 000000000000
+      topic-name: hocs-audit-topic
+      arn: arn:aws:sns:${aws.sns.config.region}:${aws.sns.audit-search.account.id}:${aws.sns.audit-search.topic-name}
+
+spring:
+  datasource:
+    hikari:
+      minimumIdle: 2
