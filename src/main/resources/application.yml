@@ -1,8 +1,14 @@
+info:
+  app:
+    name: ${name:hocs-topics-service}
+    fullname: Hocs Topic Service
+    version: ${version:0.0.1}
+
 server:
   http2:
     enabled: true
-  max_http_request_header_size: 1048576
-  port: 8087
+  max-http-header-size: 1048576
+  port: 8097
   shutdown: graceful
 
 spring:
@@ -24,3 +30,23 @@ management:
       enabled: true
       probes:
         enabled: true
+
+hocs:
+  case-service: http://localhost:8082
+
+auditing:
+  deployment:
+    namespace: local
+    name: ${info.app.name}
+
+aws:
+  sns:
+    config:
+      region: eu-west-2
+    audit-search:
+      account:
+        access-key:
+        secret-key:
+        id:
+        topic-name:
+        arn: arn:aws:sns:${aws.sns.config.region}:${aws.sns.audit-search.account.id}:${aws.sns.audit-search.topic-name}

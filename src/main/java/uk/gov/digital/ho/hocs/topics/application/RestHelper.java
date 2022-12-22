@@ -1,0 +1,86 @@
+package uk.gov.digital.ho.hocs.topics.application;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+import uk.gov.digital.ho.hocs.topics.domain.exception.ApplicationExceptions;
+
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static uk.gov.digital.ho.hocs.topics.application.LogEvent.EVENT;
+import static uk.gov.digital.ho.hocs.topics.application.LogEvent.REST_HELPER_INTERNAL_SERVER_ERROR;
+import static uk.gov.digital.ho.hocs.topics.application.LogEvent.REST_HELPER_MALFORMED_RESPONSE;
+import static uk.gov.digital.ho.hocs.topics.application.LogEvent.REST_HELPER_NOT_FOUND;
+
+@Slf4j
+@Component
+public class RestHelper {
+
+    private RestTemplate restTemplate;
+
+    private RequestData requestData;
+
+    @Autowired
+    public RestHelper(RestTemplate restTemplate,
+                      RequestData requestData) {
+        this.restTemplate = restTemplate;
+        this.requestData = requestData;
+    }
+
+    public <T, R> ResponseEntity<R> post(String serviceBaseURL, String url, T request, Class<R> responseType) {
+        return restTemplate.exchange(String.format("%s%s", serviceBaseURL, url), HttpMethod.POST,
+            new HttpEntity<>(request, createAuthHeaders()), responseType);
+    }
+
+    public <R> ResponseEntity<R> get(String serviceBaseURL, String url, Class<R> responseType) {
+        ResponseEntity<R> response = restTemplate.exchange(String.format("%s%s", serviceBaseURL, url), HttpMethod.GET,
+            new HttpEntity<>(null, createAuthHeaders()), responseType);
+        validateResponse(response);
+        return response;
+    }
+
+    public <R> ResponseEntity<R> delete(String serviceBaseURL, String url, Class<R> responseType) {
+        return restTemplate.exchange(String.format("%s%s", serviceBaseURL, url), HttpMethod.DELETE,
+            new HttpEntity<>(null, createAuthHeaders()), responseType);
+    }
+
+    private HttpHeaders createAuthHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(RequestData.GROUP_HEADER, requestData.groups());
+        headers.add(RequestData.USER_ID_HEADER, requestData.userId());
+        headers.add(RequestData.CORRELATION_ID_HEADER, requestData.correlationId());
+        return headers;
+    }
+
+
+    private static <T> T validateResponse(ResponseEntity<T> responseEntity) {
+        if (responseEntity.getStatusCode().equals(HttpStatus.OK)) {
+            if (responseEntity.hasBody()) {
+                return responseEntity.getBody();
+            } else {
+                log.error("Server returned malformed response %s", responseEntity.getStatusCodeValue(),
+                    value(EVENT, REST_HELPER_MALFORMED_RESPONSE));
+                throw new ApplicationExceptions.ResourceServerException("Server returned malformed response",
+                    REST_HELPER_MALFORMED_RESPONSE);
+            }
+        } else if (responseEntity.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+            log.error("Server returned not found response %s", responseEntity.getStatusCodeValue(),
+                value(EVENT, REST_HELPER_MALFORMED_RESPONSE));
+            throw new ApplicationExceptions.ResourceNotFoundException("Server returned not found response",
+                REST_HELPER_NOT_FOUND);
+        } else {
+            log.error("Server returned invalid response %s", responseEntity.getStatusCodeValue(),
+                value(EVENT, REST_HELPER_MALFORMED_RESPONSE));
+            throw new ApplicationExceptions.ResourceServerException("Server returned invalid response",
+                REST_HELPER_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+}
